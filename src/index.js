@@ -56,7 +56,7 @@ function createApp(appName, installpath) {
             env: process.env
         };
 
-        let native = spawn('react-native.cmd', ['init', appName], defaults);
+        let native = spawn(getCommand('react-native'), ['init', appName], defaults);
         
         native.stdout.on('data', message.info);
     
@@ -202,7 +202,7 @@ function installDeps(appPath) {
             env: process.env
         };
 
-        let native = spawn('yarn.cmd', ['install'], defaults);
+        let native = spawn(getCommand('yarn'), ['install'], defaults);
         
         native.stdout.on('data', message.info);
     
@@ -246,6 +246,10 @@ function copyFile(source, destination) {
             reject(error);
         }
     });
+}
+
+function getCommand(command) {
+    return process.platform === 'win32' ? command + '.cmd' : command;
 }
 
 main(process.argv);
