@@ -1,6 +1,6 @@
 {
   "name": "create-react-native-typescript-app",
-  "version": "1.0.0-rc1",
+  "version": "1.0.0",
   "description": "A react-native with typescript starter cli.",
   "main": "./dist/index.js",
   "author": "Ritesh Gite <huestack@yahoo.com>",
@@ -10,14 +10,14 @@
     "url": "https://github.com/huestack/create-react-native-typescript-app"
   },
   "dependencies": {
+    "babel-runtime": "^6.26.0",
     "chalk": "^2.3.0",
-    "rimraf": "^2.6.2",
-    "babel-runtime": "^6.26.0"
+    "rimraf": "^2.6.2"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
     "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
     "gulp": "^3.9.1",
     "gulp-babel": "^7.0.0"
   },
@@ -28,9 +28,6 @@
     "create-react-native-typescript-app": "./dist/index.js"
   },
   "engines": {
-    "node": ""
-  },
-  "files": [
-    "./dist/**/*"
-  ]
+    "node": ">=7.8.0"
+  }
 }
