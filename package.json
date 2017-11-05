@@ -1,10 +1,14 @@
 {
-  "name": "ReactNativeTypeScriptCLI",
-  "version": "1.0.0",
-  "description": "A react-native with typescript starter.",
-  "main": "index.js",
+  "name": "create-react-native-typescript-app",
+  "version": "1.0.0-rc1",
+  "description": "A react-native with typescript starter cli.",
+  "main": "./dist/index.js",
   "author": "Ritesh Gite <huestack@yahoo.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/huestack/create-react-native-typescript-app"
+  },
   "dependencies": {
     "chalk": "^2.3.0",
     "rimraf": "^2.6.2",
@@ -22,5 +26,11 @@
   },
   "bin": {
     "create-react-native-typescript-app": "./dist/index.js"
-  }
+  },
+  "engines": {
+    "node": ""
+  },
+  "files": [
+    "./dist/**/*"
+  ]
 }
