@@ -82,30 +82,6 @@ function createApp(appName, installpath) {
     });
 }
 
-function createMockApp(appName, installPath) {
-    return new Promise((resolve, reject) => {
-        const appDir = `${installPath}/${appName}`;
-        if (fs.existsSync(appDir)) {
-            rimraf.sync(appDir);
-        }
-
-        fs.mkdir(appDir, error => {
-            if (error) {
-                reject(error);
-                return;
-            }
-
-            try {
-                fs.copyFileSync(`${__dirname}/assets/package.json`, `${appDir}/package.json`);
-                fs.copyFileSync(`${__dirname}/assets/index.js`, `${appDir}/index.js`);
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        });
-    });
-}
-
 function createSourceDirectory(sourceDirectory) {
     return new Promise((resolve, reject) => {
         fs.mkdir(sourceDirectory, error => error ? reject(error) : resolve());
@@ -129,14 +105,10 @@ function modifyAppFiles(appPath) {
 }
 
 function copyAssetFile(fileName, cliAssetsPath, destDir) {
-    return new Promise((resolve, reject) => {
-        fs.copyFile(
-            `${cliAssetsPath}/${fileName}`,
-            `${destDir}/${fileName}`,
-            fs.constants.COPYFILE_EXCL, 
-            error => error ? reject(error) : resolve()
-        )
-    });
+    return copyFile(
+        `${cliAssetsPath}/${fileName}`,
+        `${destDir}/${fileName}`
+    );
 }
 
 function modifyIndexJs(appPath) {
@@ -253,6 +225,26 @@ function installDeps(appPath) {
             
             resolve();
         });
+    });
+}
+
+function copyFile(source, destination) {
+    return new Promise((resolve, reject) => {
+        let writeStream = 
+            fs.createWriteStream(destination)
+                .on('error', error => rejectCleanup)
+                .on('finish', resolve);
+
+        let readStream = 
+            fs.createReadStream(source)
+                .on('error', error => rejectCleanup)
+                .pipe(writeStream);
+
+        function rejectCleanup(error) {
+            readStream.destroy();
+            writeStream.end();
+            reject(error);
+        }
     });
 }
 
