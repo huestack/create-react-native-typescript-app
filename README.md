@@ -5,7 +5,7 @@ This tool helps you setup [Typescript](https://github.com/Microsoft/TypeScript) 
 
 
 # Getting Started
-Make sure you have **[react-native-cli](https://www.npmjs.com/package/react-native-cli)** installed as global module.
+Make sure you have **[react-native-cli](https://www.npmjs.com/package/react-native-cli)** installed as global module, and (optionally) [yarn](https://yarnpkg.com/) for faster dependency downloads.
 ## Install
 ```sh
 $ npm install create-react-native-typescript-app -g
