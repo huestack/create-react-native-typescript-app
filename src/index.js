@@ -1,15 +1,24 @@
 #!/usr/bin/env node
 
 import * as chalk from 'chalk';
-import { spawn } from 'child_process';
+import { spawn, execFile } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import rimraf from 'rimraf';
 
 import message from './message';
+import * as constants from './constants';
 
-const SOURCE_FOLDER_NAME = 'src';
-const BUILD_FOLDER_NAME = 'build';
+const commandArgs = {
+    npm: {
+        install: 'install',
+        run: 'run'
+    },
+    yarn: {
+        install: 'install',
+        run: ''
+    }
+}
 
 function main(argv) {
     let appName = getAppName(argv);
@@ -38,15 +47,31 @@ async function init(appName) {
     if (fs.existsSync(appPath)) {
         throw new Error(`${appName} directory already exists.`);
     } else {
+        const packageManager = await getPackageManager();
         await createApp(appName, installPath)
-        await createSourceDirectory(`${appPath}/${SOURCE_FOLDER_NAME}`);
+        await createSourceDirectory(`${appPath}/${constants.SOURCE_FOLDER_NAME}`);
         await copyAssetFiles(`${cliPath}/assets`, appPath);
-        await modifyAppFiles(appPath);
-        await installDeps(appPath);
+        await modifyAppFiles(appPath, packageManager);
+        await installDeps(appPath, packageManager);
 
         message.success(`${appName} project created successfully.`);
-        message.info("Use 'yarn android' or 'yarn ios' to run.");
+        
+        const command = packageManager + (commandArgs[packageManager].run ? ' ' + commandArgs[packageManager].run : '');
+        message.info(`Use '${command} android' or '${command} ios' to run.`);
     }
+}
+
+/**Returns yarn if installed, otherwise use npm. */
+function getPackageManager() {
+    return new Promise((resolve, reject) => {
+        execFile(getCommand(constants.YARN), ['-v'], (error, stdout, stderr) => {
+            if (error) {
+                resolve(constants.NPM);
+            } else {
+                resolve(constants.YARN);
+            }
+        });
+    });
 }
 
 function createApp(appName, installpath) {
@@ -56,7 +81,7 @@ function createApp(appName, installpath) {
             env: process.env
         };
 
-        let native = spawn(getCommand('react-native'), ['init', appName], defaults);
+        let native = spawn(getCommand(constants.REACT_NATIVE), ['init', appName], defaults);
         
         native.stdout.on('data', message.info);
     
@@ -89,16 +114,16 @@ function createSourceDirectory(sourceDirectory) {
 }
 
 function copyAssetFiles(cliAssetsPath, destDir) {
-    const appPromise = copyAssetFile('App.tsx', cliAssetsPath, `${destDir}/${SOURCE_FOLDER_NAME}`);
+    const appPromise = copyAssetFile('App.tsx', cliAssetsPath, `${destDir}/${constants.SOURCE_FOLDER_NAME}`);
     const tsConfigPromise = copyAssetFile('tsconfig.json', cliAssetsPath, destDir);
     const tsLintPromise = copyAssetFile('tslint.json', cliAssetsPath, destDir);
     
     return Promise.all([appPromise, tsConfigPromise, tsLintPromise]);
 }
 
-function modifyAppFiles(appPath) {
+function modifyAppFiles(appPath, packageManager) {
     const indexPromise = modifyIndexJs(appPath);
-    const packagePromise = modifyPackageJson(appPath);
+    const packagePromise = modifyPackageJson(appPath, packageManager);
     const removeAppJsPromise = removeAppJs(appPath);
 
     return Promise.all([indexPromise, packagePromise, removeAppJsPromise]);
@@ -121,7 +146,7 @@ function modifyIndexJs(appPath) {
                 return;
             }
 
-            const replacedContent = content.replace(/'.\/App'/i, `'./${BUILD_FOLDER_NAME}/App'`);
+            const replacedContent = content.replace(/'.\/App'/i, `'./${constants.BUILD_FOLDER_NAME}/App'`);
 
             fs.writeFile(fileName, replacedContent, 'utf8', error => {
                 if(error) {
@@ -135,7 +160,7 @@ function modifyIndexJs(appPath) {
     });
 }
 
-function modifyPackageJson(appPath) {
+function modifyPackageJson(appPath, packageManager) {
     return new Promise((resolve, reject) => {
         const fileName = `${appPath}/package.json`;
 
@@ -146,17 +171,19 @@ function modifyPackageJson(appPath) {
             }
 
             const packageJson = JSON.parse(content);
+            const command = packageManager + ' ' + commandArgs[packageManager].run;
+
             packageJson.scripts = Object.assign(
                 {},
                 packageJson.scripts,
                 {
                     "tsc": "tsc",
                     "clean": "rimraf build",
-                    "build": "yarn clean && yarn tsc --",
+                    "build": `${command} clean && ${command} tsc --`,
                     "lint": "tslint src/**/*.ts",
-                    "watch": "yarn build -- -w",
-                    "ios": "yarn build && concurrently -r \"yarn watch\" \"react-native run-ios\"",
-                    "android": "yarn build && concurrently -r \"yarn watch\" \"react-native run-android\""
+                    "watch": `${command} build -w`,
+                    "ios": `${command} build && concurrently -r \"${command} watch\" \"react-native run-ios\"`,
+                    "android": `${command} build && concurrently -r \"${command} watch\" \"react-native run-android\"`
                 }
             );
 
@@ -195,14 +222,17 @@ function removeAppJs(appPath) {
     });
 }
 
-function installDeps(appPath) {
+function installDeps(appPath, packageManager) {
     return new Promise((resolve, reject) => {
         const defaults = {
             cwd: appPath,
             env: process.env
         };
 
-        let native = spawn(getCommand('yarn'), ['install'], defaults);
+        let native = spawn(
+            getCommand(packageManager), 
+            [commandArgs[packageManager].install],
+            defaults);
         
         native.stdout.on('data', message.info);
     

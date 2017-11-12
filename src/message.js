@@ -2,11 +2,11 @@ import * as chalk from 'chalk';
 
 class Message {
     error(data) {
-        console.error(chalk.default.red(data));
+        console.log(chalk.default.red(data));
     };
 
     warn(data) {
-        console.error(chalk.default.yellow(data));
+        console.log(chalk.default.yellow(data));
     }
 
     info(data) {
