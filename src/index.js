@@ -12,11 +12,17 @@ import * as constants from './constants';
 const commandArgs = {
     npm: {
         install: 'install',
-        run: 'run'
+        run: 'run',
+        dev: function(deps){
+            return ['install', ...deps, '--save-dev'];
+        }
     },
     yarn: {
         install: 'install',
-        run: ''
+        run: '',
+        dev: function(deps){
+            return ['add', ...deps, '--dev'];
+        }
     }
 }
 
@@ -48,11 +54,12 @@ async function init(appName) {
         throw new Error(`${appName} directory already exists.`);
     } else {
         const packageManager = await getPackageManager();
+        
         await createApp(appName, installPath)
         await createSourceDirectory(`${appPath}/${constants.SOURCE_FOLDER_NAME}`);
         await copyAssetFiles(`${cliPath}/assets`, appPath);
         await modifyAppFiles(appPath, packageManager);
-        await installDeps(appPath, packageManager);
+        await installDevDeps(appPath, packageManager);
 
         message.success(`${appName} project created successfully.`);
         
@@ -126,7 +133,11 @@ function modifyAppFiles(appPath, packageManager) {
     const packagePromise = modifyPackageJson(appPath, packageManager);
     const removeAppJsPromise = removeAppJs(appPath);
 
-    return Promise.all([indexPromise, packagePromise, removeAppJsPromise]);
+    return Promise.all([
+        indexPromise,
+        packagePromise,
+        removeAppJsPromise
+    ]);
 }
 
 function copyAssetFile(fileName, cliAssetsPath, destDir) {
@@ -187,21 +198,6 @@ function modifyPackageJson(appPath, packageManager) {
                 }
             );
 
-            packageJson.devDependencies = Object.assign(
-                {},
-                packageJson.devDependencies,
-                {
-                    "@types/jest": "^21.1.5",
-                    "@types/react": "^16.0.19",
-                    "@types/react-native": "^0.49.5",
-                    "concurrently": "^3.5.0",
-                    "react-native-cli": "^2.0.1",
-                    "rimraf": "^2.6.2",
-                    "tslint": "^5.8.0",
-                    "typescript": "^2.6.1"
-                }
-            );
-
             const replacedContent = JSON.stringify(packageJson, null, '\t');
 
             fs.writeFile(fileName, replacedContent, 'utf8', error => {
@@ -222,20 +218,31 @@ function removeAppJs(appPath) {
     });
 }
 
-function installDeps(appPath, packageManager) {
+function installDevDeps(appPath, packageManager) {
     return new Promise((resolve, reject) => {
         const defaults = {
             cwd: appPath,
             env: process.env
         };
 
+        const dependencies = [
+            'react-native-cli',
+            'concurrently',
+            'rimraf',
+            'typescript',
+            'tslint',
+            '@types/jest',
+            '@types/react',
+            '@types/react-native'
+        ];
+
         let native = spawn(
             getCommand(packageManager), 
-            [commandArgs[packageManager].install],
+            commandArgs[packageManager].dev(dependencies),
             defaults);
-        
+
         native.stdout.on('data', message.info);
-    
+        
         native.stderr.on('data', data => {
             let text = data.toString();
             if (text.startsWith('Error')) {
