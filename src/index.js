@@ -8,6 +8,8 @@ import rimraf from 'rimraf';
 
 import message from './message';
 import * as constants from './constants';
+/**command arguments */
+const options=require('minimist')(process.argv.slice(2));
 
 const commandArgs = {
     npm: {
@@ -87,8 +89,20 @@ function createApp(appName, installpath) {
             cwd: installpath,
             env: process.env
         };
-
-        let native = spawn(getCommand(constants.REACT_NATIVE), ['init', appName], defaults);
+		let spawnArg=[];
+		spawnArg.push('init');
+		spawnArg.push(appName);
+		/** react-native version*/
+		if(options.version){
+			spawnArg.push('--version');
+			spawnArg.push(options.version);
+		}
+		/** react-native-cli options*/
+		if(options.verbose){
+			spawnArg.push('verbose');
+			spawnArg.push(options.verbose);
+		} 
+        let native = spawn(getCommand(constants.REACT_NATIVE), spawnArg, defaults);
         
         native.stdout.on('data', message.info);
     
