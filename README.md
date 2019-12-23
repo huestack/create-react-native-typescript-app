@@ -1,3 +1,12 @@
+## Deprecated
+Deprecated in favour of React-Native's Typescript template. 
+```
+npx react-native init AwesomeTSProject --template react-native-template-typescript
+```
+For more information, visit https://facebook.github.io/react-native/docs/getting-started
+
+
+
 # Create React-Native App with Typescript
 
 This tool helps you setup [Typescript](https://github.com/Microsoft/TypeScript) to use for [React-Native](https://github.com/facebook/react-native) app development. 
